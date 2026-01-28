@@ -20,7 +20,7 @@ The core objective is to transform raw complaint data into **actionable risk int
 
 ## 3. System Architecture (Logical)
 
-<img src="C:\Users\niyat\OneDrive\Pictures\Screenshots\Screenshot 2026-01-28 082719.png" >
+![Program Output](architecture.png)
 
 ## 4. Technology Stack
 
