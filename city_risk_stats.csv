@@ -1,0 +1,11 @@
+withdrawal_city,Total_Complaints,High_Risk_Cases,Avg_Risk_Score,Priority_Level
+Mumbai,1402,674,0.4428557279847741,High Priority Monitoring Zone
+Kolkata,1373,627,0.43287279245621807,High Priority Monitoring Zone
+Delhi,1337,620,0.42994600216300033,High Priority Monitoring Zone
+Bengaluru,842,125,0.1677477781673453,High Priority Monitoring Zone
+Lucknow,841,119,0.16174635874759385,High Priority Monitoring Zone
+Jaipur,800,115,0.16129396132245946,Standard Monitoring
+Indore,822,104,0.15436504315237531,Standard Monitoring
+Pune,855,107,0.15154207176422207,Standard Monitoring
+Hyderabad,859,110,0.14554834273102235,Standard Monitoring
+Chennai,869,109,0.14522616554399487,Standard Monitoring
