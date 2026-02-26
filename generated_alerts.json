@@ -1,0 +1,71 @@
+[
+    {
+        "alert_id": "ALT-9003",
+        "timestamp": "2026-02-26T16:10:46.139572",
+        "type": "ZONE_RED_FLAG",
+        "severity": "HIGH",
+        "location": "Mumbai",
+        "evidence": {
+            "avg_risk_score": 0.4429,
+            "total_complaints": 1402,
+            "high_risk_volume": 674
+        },
+        "recipients": [
+            "Cyber Cell HQ",
+            "Regional Banking Risk Unit"
+        ],
+        "recommended_action": "Deploy specialized task force. Enable enhanced transaction monitoring."
+    },
+    {
+        "alert_id": "ALT-3028",
+        "timestamp": "2026-02-26T16:10:46.139572",
+        "type": "ZONE_RED_FLAG",
+        "severity": "HIGH",
+        "location": "Kolkata",
+        "evidence": {
+            "avg_risk_score": 0.4329,
+            "total_complaints": 1373,
+            "high_risk_volume": 627
+        },
+        "recipients": [
+            "Cyber Cell HQ",
+            "Regional Banking Risk Unit"
+        ],
+        "recommended_action": "Deploy specialized task force. Enable enhanced transaction monitoring."
+    },
+    {
+        "alert_id": "ALT-1883",
+        "timestamp": "2026-02-26T16:10:46.139572",
+        "type": "ZONE_RED_FLAG",
+        "severity": "HIGH",
+        "location": "Delhi",
+        "evidence": {
+            "avg_risk_score": 0.4299,
+            "total_complaints": 1337,
+            "high_risk_volume": 620
+        },
+        "recipients": [
+            "Cyber Cell HQ",
+            "Regional Banking Risk Unit"
+        ],
+        "recommended_action": "Deploy specialized task force. Enable enhanced transaction monitoring."
+    },
+    {
+        "alert_id": "ALT-1153",
+        "timestamp": "2026-02-26T16:10:46.139572",
+        "type": "SURGE_WARNING",
+        "severity": "CRITICAL",
+        "location": "Jaipur",
+        "evidence": {
+            "trigger": "Sudden Spike in High-Risk Predictions",
+            "current_rate": "50 events/hr",
+            "baseline_rate": "5 events/hr",
+            "deviation": "+900%"
+        },
+        "recipients": [
+            "Local Control Room",
+            "Field Units"
+        ],
+        "recommended_action": "Immediate on-ground verification. Intercept potential mule operations."
+    }
+]
