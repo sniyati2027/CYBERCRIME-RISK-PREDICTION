@@ -1,47 +1,4 @@
-# CYBERCRIME-RISK-PREDICTION
-
-# Cybercrime Predictive Analytics Framework
-
-## 1. Problem Statement (Redefined)
-
-Cybercrime complaints related to financial fraud are increasing rapidly, making reactive investigation insufficient. This project focuses on **using historical cybercrime complaint data to predict high-risk cash withdrawal locations**, enabling proactive intervention.
-Instead of building a full-scale national system, this project **designs and implements a prototype predictive analytics framework** that demonstrates how data-driven intelligence can support law enforcement agencies and financial institutions in identifying potential withdrawal hotspots in advance.
-The core objective is to transform raw complaint data into **actionable risk intelligence** using machine learning and geospatial analysis.
-
----
-
-## 2. Project Objectives
-
-* Analyze historical cybercrime complaint data to identify patterns related to fraudulent cash withdrawals
-* Predict likely cash withdrawal locations or high-risk regions using ML models
-* Generate location-based risk scores to support proactive monitoring
-* Visualize predicted risk zones using a heatmap-style representation
-* Demonstrate how alerts and intelligence could be triggered for stakeholders
-
-## 3. System Architecture (Logical)
-
-![Program Output](architecture.png)
-
-## 4. Technology Stack
-
-* Python
-* Pandas, NumPy
-* Scikit-learn
-* Matplotlib / Seaborn / Plotly / Folium (heatmap)
-* Jupyter Notebook
-* VS Code
-
-## 5. Conclusion
-
-This project presents a **data-driven, proactive approach to cybercrime mitigation** by predicting potential cash withdrawal locations from historical complaint data. While implemented as a prototype, the framework demonstrates how predictive analytics and risk intelligence can significantly enhance response speed and coordination between stakeholders.
-
----
-
-**Author:** Niyati Sardana
-
-
-
-# 🔐 Cybercrime Risk Prediction & Alert System
+# Cybercrime Risk Prediction & Alert System
 
 > A machine learning-based framework that predicts high-risk cybercrime zones across Indian cities and sends automated real-time alerts via email.
 
@@ -49,21 +6,21 @@ This project presents a **data-driven, proactive approach to cybercrime mitigati
 
 ---
 
-## 🧠 What Does This Project Do?
+##  What Does This Project Do?
 
 Most cybercrime response systems are **reactive** — they act after the crime has already happened. This project flips that around.
 
 It analyzes historical cybercrime complaint data, trains an ML model to identify patterns, and then **predicts which cities are likely to see high fraud activity** — before it escalates. On top of that, it automatically sends email alerts to the right people using an **n8n automation workflow**.
 
 In short:
-- 📊 Analyze past fraud data
-- 🤖 Predict future high-risk zones
-- 🗺️ Visualize risk on a heatmap
-- 🚨 Automatically send alerts via email
+- Analyze past fraud data
+- Predict future high-risk zones
+- Visualize risk on a heatmap
+- Automatically send alerts via email
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ![Architecture](architecture.png)
 
@@ -75,7 +32,7 @@ The pipeline flows through 4 layers:
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 CYBERCRIME-RISK-PREDICTION/
@@ -104,7 +61,7 @@ CYBERCRIME-RISK-PREDICTION/
 
 ---
 
-## 📊 Dataset Overview
+##  Dataset Overview
 
 The dataset contains cybercrime transactions across **10 major Indian cities**:
 
@@ -131,11 +88,11 @@ The dataset contains cybercrime transactions across **10 major Indian cities**:
 | `amount_bucket_encoded` | Low / Medium / High bucket |
 | `type_*` | One-hot encoded crime type columns |
 | `victim_city_encoded` | City encoded as a number |
-| `is_high_risk` | 🎯 **Target variable** (1 = High Risk, 0 = Normal) |
+| `is_high_risk` |  **Target variable** (1 = High Risk, 0 = Normal) |
 
 ---
 
-## 📈 Exploratory Data Analysis
+##  Exploratory Data Analysis
 
 ### Fraud Type Frequency
 ![Fraud Type Frequency](eda_plots/freq_fraud_type.png)
@@ -149,7 +106,7 @@ Fraud spikes heavily during **midnight to 5 AM** — a key insight used in the `
 
 ---
 
-## 🤖 Model Training
+##  Model Training
 
 The ML model is a **binary classifier** — it predicts whether a transaction is:
 - `1` → **High Risk**
@@ -165,7 +122,7 @@ The ML model is a **binary classifier** — it predicts whether a transaction is
 
 ---
 
-## 🗺️ Geographic Risk Heatmap
+##  Geographic Risk Heatmap
 
 ![Risk Heatmap](risk_heatmap.png)
 
@@ -173,15 +130,15 @@ Cities with the highest average risk scores (darker = more dangerous):
 
 | City | Avg Risk Score | Status |
 |---|---|---|
-| Mumbai | 0.4429 | 🔴 HIGH |
-| Kolkata | 0.4329 | 🔴 HIGH |
-| Delhi | 0.4299 | 🔴 HIGH |
+| Mumbai | 0.4429 |  HIGH |
+| Kolkata | 0.4329 |  HIGH |
+| Delhi | 0.4299 |  HIGH |
 
 > Threshold: Any city with Avg Risk Score > **0.40** is flagged as a hotspot.
 
 ---
 
-## 🚨 Alert Dashboard
+##  Alert Dashboard
 
 ![Alert Dashboard](alert_dashboard.png)
 
@@ -193,7 +150,7 @@ The dashboard shows:
 
 ---
 
-## ⚡ Alert System — How It Works
+##  Alert System — How It Works
 
 Alerts are generated by `simulate_alerts.py` and automatically sent via **n8n automation**.
 
@@ -201,14 +158,15 @@ Alerts are generated by `simulate_alerts.py` and automatically sent via **n8n au
 
 | Alert Type | Severity | Trigger | Example |
 |---|---|---|---|
-| `ZONE_RED_FLAG` | 🔴 HIGH | Avg Risk Score > 0.40 | Mumbai score = 0.4429 |
-| `SURGE_WARNING` | 🚨 CRITICAL | Sudden spike in fraud rate | Jaipur: 50 events/hr vs normal 5 (+900%) |
+| `ZONE_RED_FLAG` |  HIGH | Avg Risk Score > 0.40 | Mumbai score = 0.4429 |
+| `SURGE_WARNING` |  CRITICAL | Sudden spike in fraud rate | Jaipur: 50 events/hr vs normal 5 (+900%) |
 
 ### n8n Workflow (3 Nodes)
 
 ```
 [Webhook] → [IF: severity == HIGH or CRITICAL] → [Gmail: Send Alert Email]
 ```
+![n8n Workflow](n8nss.png)
 
 1. `simulate_alerts.py` generates alerts and POSTs them to the n8n webhook
 2. The **IF node** filters only HIGH and CRITICAL alerts
@@ -217,7 +175,7 @@ Alerts are generated by `simulate_alerts.py` and automatically sent via **n8n au
 ### Sample Alert Email Received
 
 ```
-🚨 [HIGH] Cybercrime Alert - Mumbai
+ [HIGH] Cybercrime Alert - Mumbai
 
 Alert ID: ALT-8855
 Type: ZONE_RED_FLAG
@@ -237,7 +195,7 @@ Recommended Action:
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 | Tool | Purpose |
 |---|---|
@@ -250,7 +208,7 @@ Recommended Action:
 
 ---
 
-## 🚀 How to Run
+##  How to Run
 
 **1. Install dependencies**
 ```bash
@@ -292,7 +250,7 @@ Check your inbox — HIGH and CRITICAL alerts will arrive automatically! 📬
 
 ---
 
-## 💡 Key Insights
+##  Key Insights
 
 - **UPI Fraud** is the most frequent crime type across all cities
 - **Midnight to 5 AM** is the peak window for high-risk transactions
