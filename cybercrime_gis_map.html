@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Cybercrime Risk GIS Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0e1a; color: #c8d8f0; font-family: 'Courier New', monospace; display: flex; flex-direction: column; height: 100vh; }
+
+  header {
+    background: #0f1628;
+    border-bottom: 1px solid #1e2d4a;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  header h1 { font-size: 18px; letter-spacing: 3px; color: #e8f0ff; }
+  header h1 span { color: #ff2d2d; }
+  .live { color: #00e676; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #00e676; animation: blink 1.5s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  .sidebar {
+    width: 280px;
+    background: #0f1628;
+    border-right: 1px solid #1e2d4a;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .sec-title {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: #4a6080;
+    padding: 12px 16px 8px;
+    border-bottom: 1px solid #1e2d4a;
+    text-transform: uppercase;
+  }
+  .city-card {
+    padding: 12px 16px;
+    border-bottom: 1px solid #1e2d4a;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .city-card:hover { background: rgba(255,45,45,0.07); }
+  .city-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .city-name { font-size: 15px; font-weight: bold; color: #e8f0ff; letter-spacing: 1px; }
+  .badge {
+    font-size: 9px;
+    padding: 2px 8px;
+    letter-spacing: 1px;
+  }
+  .badge-critical { background: rgba(255,45,45,0.2); color: #ff2d2d; border: 1px solid #ff2d2d; }
+  .badge-high     { background: rgba(255,122,0,0.2); color: #ff7a00; border: 1px solid #ff7a00; }
+  .badge-standard { background: rgba(0,230,118,0.1); color: #00e676; border: 1px solid #00e676; }
+  .bar-bg { height: 3px; background: #1e2d4a; margin-bottom: 6px; }
+  .bar-fill { height: 100%; }
+  .city-stats { display: flex; gap: 16px; }
+  .stat { display: flex; flex-direction: column; }
+  .stat-val { font-size: 13px; color: #e8f0ff; }
+  .stat-lbl { font-size: 9px; color: #4a6080; letter-spacing: 1px; text-transform: uppercase; }
+
+  #map { flex: 1; }
+
+  .right-panel {
+    width: 250px;
+    background: #0f1628;
+    border-left: 1px solid #1e2d4a;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .alert-item {
+    padding: 10px 14px;
+    border-bottom: 1px solid #1e2d4a;
+    border-left: 3px solid transparent;
+  }
+  .alert-item.critical { border-left-color: #ff2d2d; }
+  .alert-item.high     { border-left-color: #ff7a00; }
+  .alert-item.standard { border-left-color: #00e676; }
+  .alert-type { font-size: 9px; letter-spacing: 2px; margin-bottom: 3px; }
+  .alert-item.critical .alert-type { color: #ff2d2d; }
+  .alert-item.high     .alert-type { color: #ff7a00; }
+  .alert-item.standard .alert-type { color: #00e676; }
+  .alert-city { font-size: 13px; font-weight: bold; color: #e8f0ff; margin-bottom: 4px; }
+  .alert-action { font-size: 11px; color: #6a80a0; line-height: 1.4; }
+
+  .legend { padding: 14px 16px; border-top: 1px solid #1e2d4a; }
+  .legend-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 11px; }
+  .ldot { width: 12px; height: 12px; border-radius: 50%; }
+
+  .stat-bar {
+    background: #0f1628;
+    border-top: 1px solid #1e2d4a;
+    padding: 8px 24px;
+    display: flex;
+    gap: 40px;
+    flex-shrink: 0;
+  }
+  .sb-item { display: flex; align-items: center; gap: 10px; }
+  .sb-val { font-size: 20px; font-weight: bold; }
+  .sb-val.red { color: #ff2d2d; }
+  .sb-val.orange { color: #ff7a00; }
+  .sb-val.green { color: #00e676; }
+  .sb-lbl { font-size: 10px; color: #4a6080; letter-spacing: 1px; text-transform: uppercase; }
+
+  /* Leaflet popup dark style */
+  .leaflet-popup-content-wrapper {
+    background: #0f1628 !important;
+    border: 1px solid #1e2d4a !important;
+    border-radius: 0 !important;
+    color: #c8d8f0 !important;
+    box-shadow: 0 0 20px rgba(255,45,45,0.3) !important;
+  }
+  .leaflet-popup-tip { background: #0f1628 !important; }
+  .leaflet-popup-close-button { color: #ff2d2d !important; }
+  .p-title { font-size: 15px; font-weight: bold; color: #e8f0ff; letter-spacing: 2px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #1e2d4a; }
+  .p-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .p-key { font-size: 10px; color: #4a6080; letter-spacing: 1px; }
+  .p-val { font-size: 11px; color: #e8f0ff; font-weight: bold; }
+  .p-val.red { color: #ff2d2d; }
+  .p-val.orange { color: #ff7a00; }
+  .p-val.green { color: #00e676; }
+  .p-action { margin-top: 10px; padding: 6px 10px; font-size: 10px; background: rgba(255,45,45,0.1); border: 1px solid rgba(255,45,45,0.3); color: #ff2d2d; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>I4C — CYBERCRIME <span>RISK INTELLIGENCE</span> GIS DASHBOARD</h1>
+  <div class="live"><div class="dot"></div> LIVE MONITORING ACTIVE</div>
+</header>
+
+<div class="main">
+
+  <!-- LEFT SIDEBAR - City Cards -->
+  <div class="sidebar">
+    <div class="sec-title">📍 Withdrawal Hotspots</div>
+    <div id="city-list"></div>
+  </div>
+
+  <!-- MAP -->
+  <div id="map"></div>
+
+  <!-- RIGHT PANEL - Alerts -->
+  <div class="right-panel">
+    <div class="sec-title">🚨 Active Alerts</div>
+    <div id="alert-list"></div>
+    <div class="legend">
+      <div class="sec-title" style="padding:0 0 10px 0; border:none;">Legend</div>
+      <div class="legend-item"><div class="ldot" style="background:#ff2d2d"></div> Critical Risk (Score > 0.40)</div>
+      <div class="legend-item"><div class="ldot" style="background:#ff7a00"></div> High Priority (Score > 0.15)</div>
+      <div class="legend-item"><div class="ldot" style="background:#00e676"></div> Standard Monitoring</div>
+      <div class="legend-item"><div class="ldot" style="background:#ffffff; opacity:0.5"></div> Dot size = Total complaints</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- BOTTOM STAT BAR -->
+<div class="stat-bar">
+  <div class="sb-item"><div class="sb-val red">3</div><div class="sb-lbl">Critical Zones</div></div>
+  <div class="sb-item"><div class="sb-val orange">2</div><div class="sb-lbl">High Priority</div></div>
+  <div class="sb-item"><div class="sb-val green">5</div><div class="sb-lbl">Standard Zones</div></div>
+  <div class="sb-item"><div class="sb-val" style="color:#e8f0ff">10,000</div><div class="sb-lbl">Total Complaints</div></div>
+  <div class="sb-item"><div class="sb-val red">2,810</div><div class="sb-lbl">High Risk Cases</div></div>
+</div>
+
+<script>
+// ── YOUR ACTUAL DATA FROM city_risk_stats.csv ──
+const cities = [
+  { name: "Mumbai",    lat: 19.0760, lon: 72.8777, total: 1402, highRisk: 674,  score: 0.4429, priority: "High Priority Monitoring Zone" },
+  { name: "Kolkata",   lat: 22.5726, lon: 88.3639, total: 1373, highRisk: 627,  score: 0.4329, priority: "High Priority Monitoring Zone" },
+  { name: "Delhi",     lat: 28.7041, lon: 77.1025, total: 1337, highRisk: 620,  score: 0.4299, priority: "High Priority Monitoring Zone" },
+  { name: "Bengaluru", lat: 12.9716, lon: 77.5946, total: 842,  highRisk: 125,  score: 0.1677, priority: "High Priority Monitoring Zone" },
+  { name: "Lucknow",   lat: 26.8467, lon: 80.9462, total: 841,  highRisk: 119,  score: 0.1617, priority: "High Priority Monitoring Zone" },
+  { name: "Jaipur",    lat: 26.9124, lon: 75.7873, total: 800,  highRisk: 115,  score: 0.1613, priority: "Standard Monitoring" },
+  { name: "Indore",    lat: 22.7196, lon: 75.8577, total: 822,  highRisk: 104,  score: 0.1544, priority: "Standard Monitoring" },
+  { name: "Pune",      lat: 18.5204, lon: 73.8567, total: 855,  highRisk: 107,  score: 0.1515, priority: "Standard Monitoring" },
+  { name: "Hyderabad", lat: 17.3850, lon: 78.4867, total: 859,  highRisk: 110,  score: 0.1455, priority: "Standard Monitoring" },
+  { name: "Chennai",   lat: 13.0827, lon: 80.2707, total: 869,  highRisk: 109,  score: 0.1452, priority: "Standard Monitoring" },
+];
+
+function getColor(score) {
+  if (score > 0.40) return '#ff2d2d';
+  if (score > 0.15) return '#ff7a00';
+  return '#00e676';
+}
+
+function getBadgeClass(score) {
+  if (score > 0.40) return 'badge-critical';
+  if (score > 0.15) return 'badge-high';
+  return 'badge-standard';
+}
+
+function getBadgeLabel(score) {
+  if (score > 0.40) return 'CRITICAL';
+  if (score > 0.15) return 'HIGH';
+  return 'STANDARD';
+}
+
+function getAlertClass(score) {
+  if (score > 0.40) return 'critical';
+  if (score > 0.15) return 'high';
+  return 'standard';
+}
+
+function getAction(score, name) {
+  if (score > 0.40) return `Deploy task force. Alert banks & ATMs in ${name}.`;
+  if (score > 0.15) return `Enhanced monitoring. Coordinate local cyber cell.`;
+  return `Routine monitoring. No immediate action.`;
+}
+
+// ── INIT MAP ──
+const map = L.map('map', {
+  center: [22.5, 80.0],
+  zoom: 5,
+  zoomControl: true
+});
+
+// Dark tile layer
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© CartoDB',
+  maxZoom: 18
+}).addTo(map);
+
+// ── ADD MARKERS ──
+const markers = {};
+
+cities.forEach(city => {
+  const color = getColor(city.score);
+  const radius = Math.sqrt(city.total) * 1.2;
+
+  const circle = L.circleMarker([city.lat, city.lon], {
+    radius: radius,
+    fillColor: color,
+    color: color,
+    weight: 2,
+    opacity: 0.9,
+    fillOpacity: 0.35
+  }).addTo(map);
+
+  // Pulsing inner dot
+  const inner = L.circleMarker([city.lat, city.lon], {
+    radius: 5,
+    fillColor: color,
+    color: '#fff',
+    weight: 1,
+    opacity: 1,
+    fillOpacity: 1
+  }).addTo(map);
+
+  const popupHTML = `
+    <div class="p-title">${city.name.toUpperCase()}</div>
+    <div class="p-row"><span class="p-key">RISK SCORE</span><span class="p-val ${getAlertClass(city.score) === 'critical' ? 'red' : getAlertClass(city.score) === 'high' ? 'orange' : 'green'}">${city.score.toFixed(4)}</span></div>
+    <div class="p-row"><span class="p-key">TOTAL COMPLAINTS</span><span class="p-val">${city.total.toLocaleString()}</span></div>
+    <div class="p-row"><span class="p-key">HIGH RISK CASES</span><span class="p-val red">${city.highRisk.toLocaleString()}</span></div>
+    <div class="p-row"><span class="p-key">HIGH RISK %</span><span class="p-val">${((city.highRisk/city.total)*100).toFixed(1)}%</span></div>
+    <div class="p-row"><span class="p-key">STATUS</span><span class="p-val ${getAlertClass(city.score) === 'critical' ? 'red' : getAlertClass(city.score) === 'high' ? 'orange' : 'green'}">${getBadgeLabel(city.score)}</span></div>
+    <div class="p-action">⚡ ${getAction(city.score, city.name)}</div>
+  `;
+
+  circle.bindPopup(popupHTML, { maxWidth: 260 });
+  inner.bindPopup(popupHTML, { maxWidth: 260 });
+
+  markers[city.name] = { circle, inner };
+
+  inner.on('click', () => {
+    highlightCard(city.name);
+  });
+  circle.on('click', () => {
+    highlightCard(city.name);
+  });
+});
+
+// ── BUILD SIDEBAR CITY CARDS ──
+const cityList = document.getElementById('city-list');
+
+cities.forEach(city => {
+  const color = getColor(city.score);
+  const barWidth = (city.score / 0.45 * 100).toFixed(1);
+
+  const card = document.createElement('div');
+  card.className = 'city-card';
+  card.id = `card-${city.name}`;
+  card.innerHTML = `
+    <div class="city-card-top">
+      <span class="city-name">${city.name}</span>
+      <span class="badge ${getBadgeClass(city.score)}">${getBadgeLabel(city.score)}</span>
+    </div>
+    <div class="bar-bg"><div class="bar-fill" style="width:${barWidth}%; background:${color}"></div></div>
+    <div class="city-stats">
+      <div class="stat"><span class="stat-val">${city.score.toFixed(4)}</span><span class="stat-lbl">Risk Score</span></div>
+      <div class="stat"><span class="stat-val">${city.highRisk}</span><span class="stat-lbl">High Risk</span></div>
+      <div class="stat"><span class="stat-val">${city.total}</span><span class="stat-lbl">Total</span></div>
+    </div>
+  `;
+
+  card.addEventListener('click', () => {
+    map.setView([city.lat, city.lon], 8, { animate: true });
+    markers[city.name].inner.openPopup();
+    highlightCard(city.name);
+  });
+
+  cityList.appendChild(card);
+});
+
+function highlightCard(name) {
+  document.querySelectorAll('.city-card').forEach(c => c.classList.remove('selected'));
+  const card = document.getElementById(`card-${name}`);
+  if (card) { card.classList.add('selected'); card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+}
+
+// ── BUILD ALERTS PANEL ──
+const alertList = document.getElementById('alert-list');
+
+cities.forEach(city => {
+  const cls = getAlertClass(city.score);
+  const typeLabel = cls === 'critical' ? 'ZONE_RED_FLAG' : cls === 'high' ? 'HIGH_PRIORITY' : 'STANDARD_WATCH';
+
+  const item = document.createElement('div');
+  item.className = `alert-item ${cls}`;
+  item.innerHTML = `
+    <div class="alert-type">${typeLabel}</div>
+    <div class="alert-city">${city.name}</div>
+    <div class="alert-action">${getAction(city.score, city.name)}</div>
+  `;
+  alertList.appendChild(item);
+});
+</script>
+</body>
+</html>

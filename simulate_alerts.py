@@ -10,35 +10,6 @@ import requests
 N8N_WEBHOOK_URL = "http://localhost:5678/webhook/cybercrime-alert"
 # =============================================
 
-def send_to_n8n(alert: dict):
-    """Sends a single alert to the n8n webhook."""
-    try:
-        payload = {
-            "alert_id":           alert["alert_id"],
-            "timestamp":          alert["timestamp"],
-            "type":               alert["type"],
-            "severity":           alert["severity"],
-            "location":           alert["location"],
-            "avg_risk_score":     alert["evidence"].get("avg_risk_score", "N/A"),
-            "total_complaints":   alert["evidence"].get("total_complaints", "N/A"),
-            "high_risk_cases":    alert["evidence"].get("high_risk_volume", "N/A"),
-            "recommended_action": alert["recommended_action"]
-        }
-
-        response = requests.post(N8N_WEBHOOK_URL, json=payload, timeout=10)
-
-        if response.status_code == 200:
-            print(f"  ✅ Sent to n8n: [{alert['severity']}] {alert['location']}")
-        else:
-            print(f"  ⚠️  n8n returned status {response.status_code} for {alert['location']}")
-
-    except requests.exceptions.ConnectionError:
-        print("  ❌ Could not connect to n8n. Is it running? (run: npx n8n)")
-    except requests.exceptions.Timeout:
-        print("  ❌ Request timed out.")
-    except Exception as e:
-        print(f"  ❌ Unexpected error: {e}")
-
 
 def simulate_alerts():
     print("Initializing Alert Simulation System...")
@@ -102,11 +73,42 @@ def simulate_alerts():
     print(f"\nSimulation Complete. Generated {len(generated_alerts)} alerts.")
     print("Alerts saved to: generated_alerts.json")
 
-    # 5. Send HIGH and CRITICAL alerts to n8n
-    print(f"\n--- Sending Alerts to n8n ---")
-    for alert in generated_alerts:
-        if alert["severity"] in ("HIGH", "CRITICAL"):
-            send_to_n8n(alert)
+    # 5. Build one combined message and send as single POST to n8n
+    print(f"\n--- Sending Combined Alert to n8n ---")
+
+    high_alerts = [a for a in generated_alerts if a["severity"] in ("HIGH", "CRITICAL")]
+
+    combined = "🚨 CYBERCRIME RISK ALERTS\n"
+    combined += f"Generated: {current_time}\n"
+    combined += "=" * 30 + "\n"
+
+    for a in high_alerts:
+        combined += f"\nAlert ID: {a['alert_id']}\n"
+        combined += f"Type: {a['type']}\n"
+        combined += f"Severity: {a['severity']}\n"
+        combined += f"Location: {a['location']}\n"
+        combined += f"Timestamp: {a['timestamp']}\n"
+        combined += "Evidence\n"
+        combined += f"Avg Risk Score: {a['evidence'].get('avg_risk_score', 'N/A')}\n"
+        combined += f"Total Complaints: {a['evidence'].get('total_complaints', 'N/A')}\n"
+        combined += f"High Risk Cases: {a['evidence'].get('high_risk_volume', 'N/A')}\n"
+        combined += "Recommended Action\n"
+        combined += f"{a['recommended_action']}\n"
+        combined += "-" * 30 + "\n"
+
+    try:
+        payload = {"message": combined.strip()}
+        response = requests.post(N8N_WEBHOOK_URL, json=payload, timeout=10)
+        if response.status_code == 200:
+            print("  ✅ Combined alert sent to n8n!")
+        else:
+            print(f"  ⚠️  n8n returned status {response.status_code}")
+    except requests.exceptions.ConnectionError:
+        print("  ❌ Could not connect to n8n. Is it running? (run: npx n8n)")
+    except requests.exceptions.Timeout:
+        print("  ❌ Request timed out.")
+    except Exception as e:
+        print(f"  ❌ Unexpected error: {e}")
 
     # 6. Preview
     print("\n--- Alert Log Preview ---")

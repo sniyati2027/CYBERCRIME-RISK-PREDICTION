@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>I4C — File New Complaint</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#0a0e1a;color:#c8d8f0;font-family:'Courier New',monospace;min-height:100vh;}
+
+  header{background:#0f1628;border-bottom:1px solid #1e2d4a;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;}
+  header h1{font-size:16px;letter-spacing:3px;color:#e8f0ff;}
+  header h1 span{color:#ff2d2d;}
+  .nav-btn{background:transparent;color:#c8d8f0;border:1px solid #1e2d4a;padding:7px 16px;font-family:'Courier New',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;text-decoration:none;display:inline-block;}
+  .nav-btn:hover{border-color:#ff2d2d;color:#ff2d2d;}
+
+  .container{max-width:900px;margin:40px auto;padding:0 20px;display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+
+  .panel{background:#0f1628;border:1px solid #1e2d4a;padding:24px;}
+  .panel-title{font-size:10px;letter-spacing:3px;color:#4a6080;text-transform:uppercase;margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid #1e2d4a;}
+
+  .field{margin-bottom:18px;}
+  label{display:block;font-size:9px;letter-spacing:2px;color:#4a6080;text-transform:uppercase;margin-bottom:6px;}
+  input, select{width:100%;background:#0a0e1a;border:1px solid #1e2d4a;color:#e8f0ff;padding:10px 12px;font-family:'Courier New',monospace;font-size:12px;outline:none;transition:border-color 0.2s;}
+  input:focus, select:focus{border-color:#ff2d2d;}
+  select option{background:#0a0e1a;}
+
+  .submit-btn{width:100%;background:#ff2d2d;color:white;border:none;padding:12px;font-family:'Courier New',monospace;font-size:12px;letter-spacing:3px;cursor:pointer;text-transform:uppercase;transition:background 0.2s;margin-top:6px;}
+  .submit-btn:hover{background:#cc0000;}
+  .submit-btn:disabled{background:#333;cursor:not-allowed;}
+
+  #result{display:none;}
+
+  .result-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #1e2d4a;}
+  .severity-badge{font-size:11px;padding:5px 14px;letter-spacing:2px;font-weight:bold;}
+  .severity-CRITICAL{background:rgba(255,45,45,0.2);color:#ff2d2d;border:1px solid #ff2d2d;}
+  .severity-HIGH{background:rgba(255,122,0,0.2);color:#ff7a00;border:1px solid #ff7a00;}
+  .severity-LOW{background:rgba(0,230,118,0.1);color:#00e676;border:1px solid #00e676;}
+
+  .score-display{text-align:center;margin-bottom:20px;}
+  .score-number{font-size:52px;font-weight:bold;line-height:1;}
+  .score-label{font-size:9px;letter-spacing:3px;color:#4a6080;margin-top:4px;text-transform:uppercase;}
+
+  .result-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1e2d4a;}
+  .result-row:last-of-type{border-bottom:none;}
+  .r-key{font-size:9px;color:#4a6080;letter-spacing:1px;text-transform:uppercase;}
+  .r-val{font-size:12px;color:#e8f0ff;font-weight:bold;}
+  .r-val.red{color:#ff2d2d;}
+  .r-val.green{color:#00e676;}
+
+  .action-box{margin-top:16px;padding:12px;background:rgba(255,45,45,0.08);border:1px solid rgba(255,45,45,0.25);}
+  .action-box.low{background:rgba(0,230,118,0.05);border-color:rgba(0,230,118,0.2);}
+  .action-title{font-size:8px;letter-spacing:2px;color:#ff2d2d;margin-bottom:6px;text-transform:uppercase;}
+  .action-title.low{color:#00e676;}
+  .action-text{font-size:11px;color:#c8d8f0;line-height:1.6;}
+
+  .map-link{display:block;text-align:center;margin-top:16px;padding:10px;border:1px solid #1e2d4a;color:#4a6080;text-decoration:none;font-size:10px;letter-spacing:2px;transition:all 0.2s;}
+  .map-link:hover{border-color:#ff2d2d;color:#ff2d2d;}
+
+  .loading-bar{height:2px;background:#ff2d2d;width:0%;transition:width 0.5s;margin-top:10px;}
+
+  .placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;color:#1e2d4a;text-align:center;}
+  .placeholder-icon{font-size:48px;margin-bottom:16px;}
+  .placeholder-text{font-size:10px;letter-spacing:2px;text-transform:uppercase;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>I4C — <span>NEW COMPLAINT</span> RISK ANALYSIS</h1>
+  <a href="/" class="nav-btn">← GIS MAP</a>
+</header>
+
+<div class="container">
+  <div class="panel">
+    <div class="panel-title">📋 Complaint Details</div>
+
+    <div class="field">
+      <label>Fraud Type</label>
+      <select id="fraud_type">
+        <option value="UPI Fraud">UPI Fraud</option>
+        <option value="OTP Scam">OTP Scam</option>
+        <option value="Phishing">Phishing</option>
+        <option value="Credit Card Fraud">Credit Card Fraud</option>
+        <option value="Fake Loan App">Fake Loan App</option>
+        <option value="Online Shopping Scam">Online Shopping Scam</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Fraud Amount (₹)</label>
+      <input type="number" id="fraud_amount" placeholder="e.g. 75000" min="100" max="1000000"/>
+    </div>
+
+    <div class="field">
+      <label>Victim City</label>
+      <select id="victim_city">
+        <option value="Delhi">Delhi</option>
+        <option value="Mumbai">Mumbai</option>
+        <option value="Bengaluru">Bengaluru</option>
+        <option value="Hyderabad">Hyderabad</option>
+        <option value="Chennai">Chennai</option>
+        <option value="Pune">Pune</option>
+        <option value="Kolkata">Kolkata</option>
+        <option value="Jaipur">Jaipur</option>
+        <option value="Indore">Indore</option>
+        <option value="Lucknow">Lucknow</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Time of Complaint (Hour 0–23)</label>
+      <input type="number" id="complaint_hour" placeholder="e.g. 23 for 11 PM" min="0" max="23"/>
+    </div>
+
+    <div class="field">
+      <label>Estimated Time to Withdrawal (minutes)</label>
+      <input type="number" id="time_to_withdrawal" placeholder="e.g. 60" min="1" max="1440"/>
+    </div>
+
+    <button class="submit-btn" id="submit-btn" onclick="submitComplaint()">ANALYSE RISK</button>
+    <div class="loading-bar" id="loading-bar"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">🔍 Risk Analysis Result</div>
+
+    <div id="placeholder" class="placeholder">
+      <div class="placeholder-icon">🛡️</div>
+      <div class="placeholder-text">Submit a complaint to see<br/>instant risk analysis</div>
+    </div>
+
+    <div id="result">
+      <div class="result-header">
+        <span style="font-size:13px;color:#e8f0ff;letter-spacing:1px;">ANALYSIS COMPLETE</span>
+        <span class="severity-badge" id="severity-badge">-</span>
+      </div>
+
+      <div class="score-display">
+        <div class="score-number" id="score-number">-</div>
+        <div class="score-label">Risk Score (0 = Safe, 1 = Certain Fraud)</div>
+      </div>
+
+      <div class="result-row">
+        <span class="r-key">High Risk</span>
+        <span class="r-val" id="r-highrisk">-</span>
+      </div>
+      <div class="result-row">
+        <span class="r-key">Predicted Withdrawal City</span>
+        <span class="r-val red" id="r-city">-</span>
+      </div>
+      <div class="result-row">
+        <span class="r-key">Fraud Type</span>
+        <span class="r-val" id="r-type">-</span>
+      </div>
+      <div class="result-row">
+        <span class="r-key">Amount</span>
+        <span class="r-val" id="r-amount">-</span>
+      </div>
+      <div class="result-row">
+        <span class="r-key">Victim City</span>
+        <span class="r-val" id="r-vcity">-</span>
+      </div>
+
+      <div class="action-box" id="action-box">
+        <div class="action-title" id="action-title">⚡ RECOMMENDED ACTION</div>
+        <div class="action-text" id="action-text">-</div>
+      </div>
+
+      <a href="/" class="map-link">VIEW ON GIS MAP →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+async function submitComplaint() {
+  const fraud_type         = document.getElementById('fraud_type').value;
+  const fraud_amount       = parseFloat(document.getElementById('fraud_amount').value);
+  const victim_city        = document.getElementById('victim_city').value;
+  const complaint_hour     = parseInt(document.getElementById('complaint_hour').value);
+  const time_to_withdrawal = parseInt(document.getElementById('time_to_withdrawal').value);
+
+  if (!fraud_amount || isNaN(fraud_amount))   { alert('Please enter a valid fraud amount'); return; }
+  if (isNaN(complaint_hour))                  { alert('Please enter complaint hour'); return; }
+  if (isNaN(time_to_withdrawal))              { alert('Please enter time to withdrawal'); return; }
+
+  const btn = document.getElementById('submit-btn');
+  const bar = document.getElementById('loading-bar');
+  btn.disabled = true;
+  btn.textContent = 'ANALYSING...';
+  bar.style.width = '70%';
+
+  try {
+    const res  = await fetch('/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fraud_type, fraud_amount, victim_city, complaint_hour, time_to_withdrawal })
+    });
+    const data = await res.json();
+
+    bar.style.width = '100%';
+    setTimeout(() => { bar.style.width = '0%'; }, 600);
+
+    document.getElementById('placeholder').style.display = 'none';
+    document.getElementById('result').style.display      = 'block';
+
+    const badge = document.getElementById('severity-badge');
+    badge.textContent = data.severity;
+    badge.className   = `severity-badge severity-${data.severity}`;
+
+    const scoreEl = document.getElementById('score-number');
+    scoreEl.textContent = data.risk_score.toFixed(4);
+    scoreEl.style.color = data.severity === 'CRITICAL' ? '#ff2d2d' : data.severity === 'HIGH' ? '#ff7a00' : '#00e676';
+
+    document.getElementById('r-highrisk').textContent = data.is_high_risk ? '⚠️ YES' : '✅ NO';
+    document.getElementById('r-highrisk').className   = `r-val ${data.is_high_risk ? 'red' : 'green'}`;
+    document.getElementById('r-city').textContent     = data.predicted_city;
+    document.getElementById('r-type').textContent     = data.fraud_type;
+    document.getElementById('r-amount').textContent   = '₹' + data.fraud_amount.toLocaleString();
+    document.getElementById('r-vcity').textContent    = data.victim_city;
+    document.getElementById('action-text').textContent = data.action;
+    // Show alert status
+const alertBox = document.getElementById('action-box');
+if (data.alert && data.alert.sent) {
+    const alertStatus = document.createElement('div');
+    alertStatus.style.cssText = 'margin-top:10px;padding:6px 10px;background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);color:#00e676;font-size:10px;letter-spacing:1px;';
+    alertStatus.textContent = `✅ ALERT SENT TO AUTHORITIES — ID: ${data.alert.alert_id}`;
+    alertBox.appendChild(alertStatus);
+} else if (data.severity !== 'LOW') {
+    const alertStatus = document.createElement('div');
+    alertStatus.style.cssText = 'margin-top:10px;padding:6px 10px;background:rgba(255,122,0,0.1);border:1px solid rgba(255,122,0,0.3);color:#ff7a00;font-size:10px;letter-spacing:1px;';
+    alertStatus.textContent = '⚠️ ALERT COULD NOT REACH n8n — IS IT RUNNING?';
+    alertBox.appendChild(alertStatus);
+}
+
+    const actionBox   = document.getElementById('action-box');
+    const actionTitle = document.getElementById('action-title');
+    if (data.severity === 'LOW') {
+      actionBox.classList.add('low');
+      actionTitle.classList.add('low');
+    } else {
+      actionBox.classList.remove('low');
+      actionTitle.classList.remove('low');
+    }
+
+  } catch(e) {
+    alert('Error connecting to server. Make sure backend is running.');
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'ANALYSE RISK';
+  }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') submitComplaint(); });
+</script>
+</body>
+</html>

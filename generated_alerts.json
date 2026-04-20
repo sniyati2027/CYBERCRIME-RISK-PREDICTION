@@ -1,7 +1,7 @@
 [
     {
-        "alert_id": "ALT-9003",
-        "timestamp": "2026-02-26T16:10:46.139572",
+        "alert_id": "ALT-6679",
+        "timestamp": "2026-03-12T12:26:47.877448",
         "type": "ZONE_RED_FLAG",
         "severity": "HIGH",
         "location": "Mumbai",
@@ -17,8 +17,8 @@
         "recommended_action": "Deploy specialized task force. Enable enhanced transaction monitoring."
     },
     {
-        "alert_id": "ALT-3028",
-        "timestamp": "2026-02-26T16:10:46.139572",
+        "alert_id": "ALT-3643",
+        "timestamp": "2026-03-12T12:26:47.877448",
         "type": "ZONE_RED_FLAG",
         "severity": "HIGH",
         "location": "Kolkata",
@@ -34,8 +34,8 @@
         "recommended_action": "Deploy specialized task force. Enable enhanced transaction monitoring."
     },
     {
-        "alert_id": "ALT-1883",
-        "timestamp": "2026-02-26T16:10:46.139572",
+        "alert_id": "ALT-9662",
+        "timestamp": "2026-03-12T12:26:47.877448",
         "type": "ZONE_RED_FLAG",
         "severity": "HIGH",
         "location": "Delhi",
@@ -51,8 +51,8 @@
         "recommended_action": "Deploy specialized task force. Enable enhanced transaction monitoring."
     },
     {
-        "alert_id": "ALT-1153",
-        "timestamp": "2026-02-26T16:10:46.139572",
+        "alert_id": "ALT-3892",
+        "timestamp": "2026-03-12T12:26:47.877448",
         "type": "SURGE_WARNING",
         "severity": "CRITICAL",
         "location": "Jaipur",

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>I4C — Law Enforcement Interface</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#0a0e1a;color:#c8d8f0;font-family:'Courier New',monospace;min-height:100vh;}
+  header{background:#0f1628;border-bottom:1px solid #1e2d4a;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;}
+  header h1{font-size:15px;letter-spacing:3px;color:#e8f0ff;}
+  header h1 span{color:#ff2d2d;}
+  .nav-links{display:flex;gap:10px;}
+  .nav-btn{background:transparent;color:#c8d8f0;border:1px solid #1e2d4a;padding:6px 14px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;text-decoration:none;display:inline-block;transition:all 0.2s;}
+  .nav-btn:hover{border-color:#ff2d2d;color:#ff2d2d;}
+  .nav-btn.active{background:#ff2d2d;border-color:#ff2d2d;color:white;}
+
+  .container{max-width:1400px;margin:0 auto;padding:24px 20px;}
+
+  /* STAT CARDS */
+  .stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+  .stat-card{background:#0f1628;border:1px solid #1e2d4a;padding:16px 20px;}
+  .stat-card-val{font-size:32px;font-weight:bold;margin-bottom:4px;}
+  .stat-card-val.red{color:#ff2d2d;}
+  .stat-card-val.orange{color:#ff7a00;}
+  .stat-card-val.green{color:#00e676;}
+  .stat-card-val.blue{color:#64a0ff;}
+  .stat-card-lbl{font-size:9px;color:#4a6080;letter-spacing:2px;text-transform:uppercase;}
+
+  /* SECTIONS */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+  .panel{background:#0f1628;border:1px solid #1e2d4a;padding:0;}
+  .panel-header{padding:12px 16px;border-bottom:1px solid #1e2d4a;display:flex;justify-content:space-between;align-items:center;}
+  .panel-title{font-size:9px;letter-spacing:3px;color:#4a6080;text-transform:uppercase;}
+  .panel-body{padding:0;}
+
+  /* TABLE */
+  table{width:100%;border-collapse:collapse;}
+  th{font-size:8px;letter-spacing:2px;color:#4a6080;text-transform:uppercase;padding:8px 14px;text-align:left;border-bottom:1px solid #1e2d4a;background:#0c1220;}
+  td{font-size:11px;padding:9px 14px;border-bottom:1px solid #0c1220;color:#c8d8f0;}
+  tr:hover td{background:rgba(255,45,45,0.04);}
+  .severity-badge{font-size:8px;padding:2px 8px;letter-spacing:1px;}
+  .sev-CRITICAL{background:rgba(255,45,45,0.2);color:#ff2d2d;border:1px solid #ff2d2d;}
+  .sev-HIGH{background:rgba(255,122,0,0.2);color:#ff7a00;border:1px solid #ff7a00;}
+  .sev-standard{background:rgba(0,230,118,0.1);color:#00e676;border:1px solid #00e676;}
+
+  /* ALERT FEED */
+  .alert-feed-item{padding:12px 16px;border-bottom:1px solid #1e2d4a;border-left:3px solid transparent;transition:background 0.2s;}
+  .alert-feed-item:hover{background:rgba(255,45,45,0.04);}
+  .alert-feed-item.critical{border-left-color:#ff2d2d;}
+  .alert-feed-item.high{border-left-color:#ff7a00;}
+  .alert-feed-item.standard{border-left-color:#00e676;}
+  .alert-feed-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+  .alert-feed-id{font-size:10px;color:#e8f0ff;font-weight:bold;}
+  .alert-feed-time{font-size:9px;color:#4a6080;}
+  .alert-feed-details{font-size:10px;color:#6a80a0;line-height:1.5;}
+  .alert-feed-action{font-size:10px;color:#ff2d2d;margin-top:4px;}
+
+  /* DOWNLOAD BTN */
+  .download-btn{background:transparent;border:1px solid #1e2d4a;color:#6a80a0;font-family:'Courier New',monospace;font-size:9px;padding:5px 12px;cursor:pointer;letter-spacing:1px;transition:all 0.2s;}
+  .download-btn:hover{border-color:#00e676;color:#00e676;}
+
+  .empty-state{padding:30px;text-align:center;color:#1e2d4a;font-size:10px;letter-spacing:2px;text-transform:uppercase;}
+
+  .priority-high{color:#ff2d2d;font-weight:bold;}
+  .priority-standard{color:#00e676;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>I4C — <span>LAW ENFORCEMENT</span> INTELLIGENCE INTERFACE</h1>
+  <div class="nav-links">
+    <a href="/" class="nav-btn">← GIS MAP</a>
+    <a href="/predict-form" class="nav-btn">+ NEW COMPLAINT</a>
+    <a href="/lea" class="nav-btn active">LEA DASHBOARD</a>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- STAT CARDS -->
+  <div class="stat-cards">
+    <div class="stat-card">
+      <div class="stat-card-val red" id="sc-critical">-</div>
+      <div class="stat-card-lbl">Critical Zone Alerts</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-val orange" id="sc-session">-</div>
+      <div class="stat-card-lbl">Session Alerts Fired</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-val green" id="sc-cities">-</div>
+      <div class="stat-card-lbl">Cities Monitored</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-val blue" id="sc-highrisk">-</div>
+      <div class="stat-card-lbl">Total High Risk Cases</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+
+    <!-- CITY RISK INTELLIGENCE TABLE -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">📊 City Risk Intelligence Report</span>
+        <button class="download-btn" onclick="downloadReport()">⬇ DOWNLOAD CSV</button>
+      </div>
+      <div class="panel-body">
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>City</th>
+              <th>Risk Score</th>
+              <th>High Risk Cases</th>
+              <th>Total</th>
+              <th>Priority</th>
+            </tr>
+          </thead>
+          <tbody id="city-table-body">
+            <tr><td colspan="6" class="empty-state">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ALERT FEED -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">🚨 Alert Feed — All Alerts</span>
+        <button class="download-btn" onclick="downloadAlerts()">⬇ DOWNLOAD JSON</button>
+      </div>
+      <div class="panel-body" id="alert-feed">
+        <div class="empty-state">Loading alerts...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SESSION ALERTS TABLE -->
+  <div class="panel" style="margin-bottom:20px;">
+    <div class="panel-header">
+      <span class="panel-title">⚡ Live Session Alerts — Complaints Filed This Session</span>
+    </div>
+    <div class="panel-body">
+      <table>
+        <thead>
+          <tr>
+            <th>Alert ID</th>
+            <th>Time</th>
+            <th>Severity</th>
+            <th>Fraud Type</th>
+            <th>Amount</th>
+            <th>Victim City</th>
+            <th>Predicted Withdrawal</th>
+            <th>Risk Score</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="session-table-body">
+          <tr><td colspan="9" class="empty-state">No complaints filed this session yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let cityData = [];
+let alertData = {};
+
+async function loadAll() {
+  try {
+    // Load city risk
+    const cityRes = await fetch('/city-risk');
+    cityData = await cityRes.json();
+
+    // Load alerts
+    const alertRes = await fetch('/alerts');
+    alertData = await alertRes.json();
+
+    renderCityTable();
+    renderAlertFeed();
+    renderSessionTable();
+    updateStatCards();
+  } catch(e) {
+    console.error('Error loading data:', e);
+  }
+}
+
+function updateStatCards() {
+  const critical = (alertData.static_alerts || []).filter(a => a.severity === 'CRITICAL' || a.type === 'SURGE_WARNING').length;
+  const session  = (alertData.session_alerts || []).length;
+  const cities   = cityData.length;
+  const highRisk = cityData.reduce((s,c) => s + c.high_risk, 0);
+
+  document.getElementById('sc-critical').textContent = critical;
+  document.getElementById('sc-session').textContent  = session;
+  document.getElementById('sc-cities').textContent   = cities;
+  document.getElementById('sc-highrisk').textContent = highRisk.toLocaleString();
+}
+
+function renderCityTable() {
+  const tbody = document.getElementById('city-table-body');
+  tbody.innerHTML = '';
+
+  cityData.forEach((city, i) => {
+    const isHighPriority = city.priority === 'High Priority Monitoring Zone';
+    const scoreColor     = city.score > 0.40 ? '#ff2d2d' : city.score > 0.15 ? '#ff7a00' : '#00e676';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:#4a6080">${i+1}</td>
+      <td style="color:#e8f0ff;font-weight:bold">${city.city}</td>
+      <td style="color:${scoreColor};font-weight:bold">${city.score}</td>
+      <td style="color:#ff2d2d">${city.high_risk.toLocaleString()}</td>
+      <td>${city.total.toLocaleString()}</td>
+      <td class="${isHighPriority ? 'priority-high' : 'priority-standard'}">${isHighPriority ? '⚠ HIGH PRIORITY' : '✓ STANDARD'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderAlertFeed() {
+  const feed = document.getElementById('alert-feed');
+  const allAlerts = [...(alertData.static_alerts || [])];
+
+  if (allAlerts.length === 0) {
+    feed.innerHTML = '<div class="empty-state">No alerts found</div>';
+    return;
+  }
+
+  feed.innerHTML = '';
+  allAlerts.forEach(alert => {
+    const sev      = alert.severity || 'HIGH';
+    const cls      = sev === 'CRITICAL' ? 'critical' : sev === 'HIGH' ? 'high' : 'standard';
+    const location = alert.location || alert.predicted_city || '-';
+    const evidence = alert.evidence || {};
+    const time     = alert.timestamp ? new Date(alert.timestamp).toLocaleString() : '-';
+
+    const item = document.createElement('div');
+    item.className = `alert-feed-item ${cls}`;
+    item.innerHTML = `
+      <div class="alert-feed-top">
+        <span class="alert-feed-id">${alert.alert_id || 'ALT-???'} — ${location.toUpperCase()}</span>
+        <span class="severity-badge sev-${sev}">${sev}</span>
+      </div>
+      <div class="alert-feed-details">
+        Type: ${alert.type || '-'} &nbsp;|&nbsp;
+        ${evidence.avg_risk_score ? `Risk Score: ${evidence.avg_risk_score}` : ''}
+        ${evidence.total_complaints ? `| Cases: ${evidence.total_complaints}` : ''}
+        ${evidence.trigger ? `Trigger: ${evidence.trigger}` : ''}
+        ${evidence.deviation ? `| Deviation: ${evidence.deviation}` : ''}
+      </div>
+      <div class="alert-feed-action">⚡ ${alert.recommended_action || '-'}</div>
+      <div class="alert-feed-time">${time}</div>
+    `;
+    feed.appendChild(item);
+  });
+}
+
+function renderSessionTable() {
+  const tbody  = document.getElementById('session-table-body');
+  const alerts = alertData.session_alerts || [];
+
+  if (alerts.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No complaints filed this session yet — go to New Complaint to file one</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '';
+  alerts.forEach(alert => {
+    const sev  = alert.severity || 'HIGH';
+    const time = new Date(alert.timestamp).toLocaleTimeString();
+    const tr   = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:#e8f0ff">${alert.alert_id}</td>
+      <td style="color:#4a6080">${time}</td>
+      <td><span class="severity-badge sev-${sev}">${sev}</span></td>
+      <td>${alert.fraud_type || '-'}</td>
+      <td style="color:#ff2d2d">₹${(alert.fraud_amount||0).toLocaleString()}</td>
+      <td>${alert.victim_city || '-'}</td>
+      <td style="color:#ff2d2d;font-weight:bold">${alert.predicted_city || '-'}</td>
+      <td style="color:${sev==='CRITICAL'?'#ff2d2d':'#ff7a00'}">${alert.risk_score || '-'}</td>
+      <td style="color:#6a80a0;font-size:9px">${(alert.recommended_action||'').substring(0,50)}...</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function downloadReport() {
+  const rows = [['Rank','City','Risk Score','High Risk Cases','Total Complaints','Priority']];
+  cityData.forEach((city,i) => {
+    rows.push([i+1, city.city, city.score, city.high_risk, city.total, city.priority]);
+  });
+  const csv     = rows.map(r => r.join(',')).join('\n');
+  const blob    = new Blob([csv], { type: 'text/csv' });
+  const url     = URL.createObjectURL(blob);
+  const a       = document.createElement('a');
+  a.href        = url;
+  a.download    = 'city_risk_intelligence.csv';
+  a.click();
+}
+
+function downloadAlerts() {
+  const allAlerts = [...(alertData.static_alerts||[]), ...(alertData.session_alerts||[])];
+  const blob      = new Blob([JSON.stringify(allAlerts, null, 2)], { type: 'application/json' });
+  const url       = URL.createObjectURL(blob);
+  const a         = document.createElement('a');
+  a.href          = url;
+  a.download      = 'cybercrime_alerts.json';
+  a.click();
+}
+
+loadAll();
+setInterval(loadAll, 15000);
+</script>
+</body>
+</html>

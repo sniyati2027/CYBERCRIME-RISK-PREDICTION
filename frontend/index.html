@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>I4C — Cybercrime Risk GIS Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#0a0e1a;color:#c8d8f0;font-family:'Courier New',monospace;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+  header{background:#0f1628;border-bottom:1px solid #1e2d4a;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+  header h1{font-size:15px;letter-spacing:3px;color:#e8f0ff;}
+  header h1 span{color:#ff2d2d;}
+  .header-right{display:flex;align-items:center;gap:10px;}
+  .live{color:#00e676;font-size:11px;display:flex;align-items:center;gap:6px;}
+  .dot{width:7px;height:7px;border-radius:50%;background:#00e676;animation:blink 1.5s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  .nav-btn{background:#ff2d2d;color:white;border:none;padding:6px 14px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;text-decoration:none;display:inline-block;}
+  .nav-btn:hover{background:#cc0000;}
+  .nav-btn.outline{background:transparent;border:1px solid #1e2d4a;color:#c8d8f0;}
+  .nav-btn.outline:hover{border-color:#ff2d2d;color:#ff2d2d;}
+
+  .filter-bar{background:#0c1220;border-bottom:1px solid #1e2d4a;padding:7px 16px;display:flex;gap:18px;align-items:center;flex-shrink:0;flex-wrap:wrap;}
+  .filter-group{display:flex;align-items:center;gap:5px;}
+  .filter-label{font-size:8px;letter-spacing:2px;color:#4a6080;text-transform:uppercase;white-space:nowrap;}
+  .filter-btn{background:#0a0e1a;border:1px solid #1e2d4a;color:#6a80a0;font-family:'Courier New',monospace;font-size:9px;padding:3px 9px;cursor:pointer;letter-spacing:1px;transition:all 0.2s;}
+  .filter-btn:hover{border-color:#4a6080;color:#c8d8f0;}
+  .filter-btn.active{background:rgba(255,45,45,0.15);border-color:#ff2d2d;color:#ff2d2d;}
+  .filter-divider{width:1px;height:18px;background:#1e2d4a;}
+  .filter-tag{background:rgba(255,45,45,0.15);border:1px solid #ff2d2d;color:#ff2d2d;font-size:8px;padding:2px 8px;letter-spacing:1px;display:none;}
+  .filter-tag.show{display:inline-block;}
+
+  .main{display:flex;flex:1;overflow:hidden;}
+  .sidebar{width:255px;background:#0f1628;border-right:1px solid #1e2d4a;overflow-y:auto;flex-shrink:0;}
+  .sidebar::-webkit-scrollbar{width:3px;}
+  .sidebar::-webkit-scrollbar-thumb{background:#1e2d4a;}
+  .sec-title{font-size:9px;letter-spacing:3px;color:#4a6080;padding:10px 14px 7px;border-bottom:1px solid #1e2d4a;text-transform:uppercase;}
+  .city-card{padding:10px 14px;border-bottom:1px solid #1e2d4a;cursor:pointer;transition:all 0.2s;}
+  .city-card:hover{background:rgba(255,45,45,0.07);}
+  .city-card.selected{background:rgba(255,45,45,0.12);border-left:3px solid #ff2d2d;}
+  .city-card.hidden{display:none;}
+  .city-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+  .city-name{font-size:14px;font-weight:bold;color:#e8f0ff;letter-spacing:1px;}
+  .badge{font-size:9px;padding:2px 7px;letter-spacing:1px;}
+  .badge-critical{background:rgba(255,45,45,0.2);color:#ff2d2d;border:1px solid #ff2d2d;}
+  .badge-high{background:rgba(255,122,0,0.2);color:#ff7a00;border:1px solid #ff7a00;}
+  .badge-standard{background:rgba(0,230,118,0.1);color:#00e676;border:1px solid #00e676;}
+  .bar-bg{height:3px;background:#1e2d4a;margin-bottom:5px;}
+  .bar-fill{height:100%;}
+  .city-stats{display:flex;gap:14px;}
+  .stat{display:flex;flex-direction:column;}
+  .stat-val{font-size:12px;color:#e8f0ff;}
+  .stat-lbl{font-size:8px;color:#4a6080;letter-spacing:1px;text-transform:uppercase;}
+  #map{flex:1;}
+  .right-panel{width:235px;background:#0f1628;border-left:1px solid #1e2d4a;overflow-y:auto;flex-shrink:0;}
+  .right-panel::-webkit-scrollbar{width:3px;}
+  .right-panel::-webkit-scrollbar-thumb{background:#1e2d4a;}
+  .alert-item{padding:9px 13px;border-bottom:1px solid #1e2d4a;border-left:3px solid transparent;}
+  .alert-item.critical{border-left-color:#ff2d2d;}
+  .alert-item.high{border-left-color:#ff7a00;}
+  .alert-item.standard{border-left-color:#00e676;}
+  .alert-type{font-size:8px;letter-spacing:2px;margin-bottom:2px;}
+  .alert-item.critical .alert-type{color:#ff2d2d;}
+  .alert-item.high .alert-type{color:#ff7a00;}
+  .alert-item.standard .alert-type{color:#00e676;}
+  .alert-city{font-size:13px;font-weight:bold;color:#e8f0ff;margin-bottom:3px;}
+  .alert-action{font-size:10px;color:#6a80a0;line-height:1.4;}
+  .legend{padding:12px 14px;border-top:1px solid #1e2d4a;}
+  .legend-item{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:10px;}
+  .ldot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+  .stat-bar{background:#0f1628;border-top:1px solid #1e2d4a;padding:7px 20px;display:flex;gap:24px;flex-shrink:0;flex-wrap:wrap;}
+  .sb-item{display:flex;align-items:center;gap:8px;}
+  .sb-val{font-size:17px;font-weight:bold;}
+  .sb-val.red{color:#ff2d2d;}
+  .sb-val.orange{color:#ff7a00;}
+  .sb-val.green{color:#00e676;}
+  .sb-val.blue{color:#64a0ff;}
+  .sb-lbl{font-size:9px;color:#4a6080;letter-spacing:1px;text-transform:uppercase;}
+  .leaflet-popup-content-wrapper{background:#0f1628!important;border:1px solid #1e2d4a!important;border-radius:0!important;color:#c8d8f0!important;box-shadow:0 0 20px rgba(255,45,45,0.3)!important;}
+  .leaflet-popup-tip{background:#0f1628!important;}
+  .leaflet-popup-close-button{color:#ff2d2d!important;}
+  .p-title{font-size:14px;font-weight:bold;color:#e8f0ff;letter-spacing:2px;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid #1e2d4a;}
+  .p-row{display:flex;justify-content:space-between;margin-bottom:5px;}
+  .p-key{font-size:9px;color:#4a6080;letter-spacing:1px;}
+  .p-val{font-size:11px;color:#e8f0ff;font-weight:bold;}
+  .p-val.red{color:#ff2d2d;}
+  .p-val.orange{color:#ff7a00;}
+  .p-val.green{color:#00e676;}
+  .p-action{margin-top:8px;padding:5px 8px;font-size:9px;background:rgba(255,45,45,0.1);border:1px solid rgba(255,45,45,0.3);color:#ff2d2d;line-height:1.4;}
+</style>
+</head>
+<body>
+<header>
+  <h1>I4C — CYBERCRIME <span>RISK INTELLIGENCE</span> GIS DASHBOARD</h1>
+  <div class="header-right">
+    <div class="live"><div class="dot"></div> LIVE DATA</div>
+    <a href="/lea" class="nav-btn outline">LEA DASHBOARD</a>
+    <a href="/predict-form" class="nav-btn">+ NEW COMPLAINT</a>
+  </div>
+</header>
+
+<div class="filter-bar">
+  <div class="filter-group">
+    <span class="filter-label">Risk:</span>
+    <button class="filter-btn active" onclick="setFilter('risk','all',this)">ALL</button>
+    <button class="filter-btn" onclick="setFilter('risk','critical',this)">CRITICAL</button>
+    <button class="filter-btn" onclick="setFilter('risk','high',this)">HIGH</button>
+    <button class="filter-btn" onclick="setFilter('risk','standard',this)">STANDARD</button>
+  </div>
+  <div class="filter-divider"></div>
+  <div class="filter-group">
+    <span class="filter-label">Fraud Type:</span>
+    <button class="filter-btn active" onclick="setFilter('fraud','all',this)">ALL</button>
+    <button class="filter-btn" onclick="setFilter('fraud','upi',this)">UPI FRAUD</button>
+    <button class="filter-btn" onclick="setFilter('fraud','otp',this)">OTP SCAM</button>
+    <button class="filter-btn" onclick="setFilter('fraud','credit',this)">CREDIT CARD</button>
+    <button class="filter-btn" onclick="setFilter('fraud','phishing',this)">PHISHING</button>
+  </div>
+  <div class="filter-divider"></div>
+  <div class="filter-group">
+    <span class="filter-label">Time:</span>
+    <button class="filter-btn active" onclick="setFilter('time','all',this)">ALL</button>
+    <button class="filter-btn" onclick="setFilter('time','night',this)">NIGHT</button>
+    <button class="filter-btn" onclick="setFilter('time','day',this)">DAY</button>
+    <button class="filter-btn" onclick="setFilter('time','peak',this)">PEAK</button>
+  </div>
+  <span class="filter-tag" id="filter-tag">FILTERED VIEW</span>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="sec-title">📍 Hotspots <span id="city-count" style="color:#ff2d2d;font-size:8px;"></span></div>
+    <div id="city-list"><div style="padding:20px;color:#4a6080;font-size:11px;">Loading...</div></div>
+  </div>
+  <div id="map"></div>
+  <div class="right-panel">
+    <div class="sec-title">🚨 Active Alerts</div>
+    <div id="alert-list"></div>
+    <div class="legend">
+      <div style="font-size:9px;letter-spacing:3px;color:#4a6080;margin-bottom:10px;text-transform:uppercase;">Legend</div>
+      <div class="legend-item"><div class="ldot" style="background:#ff2d2d"></div> Critical (>0.40)</div>
+      <div class="legend-item"><div class="ldot" style="background:#ff7a00"></div> High (>0.15)</div>
+      <div class="legend-item"><div class="ldot" style="background:#00e676"></div> Standard</div>
+      <div class="legend-item"><div class="ldot" style="background:rgba(255,255,255,0.3)"></div> Size = Complaints</div>
+    </div>
+  </div>
+</div>
+
+<div class="stat-bar">
+  <div class="sb-item"><div class="sb-val red" id="sb-critical">-</div><div class="sb-lbl">Critical</div></div>
+  <div class="sb-item"><div class="sb-val orange" id="sb-high">-</div><div class="sb-lbl">High Priority</div></div>
+  <div class="sb-item"><div class="sb-val green" id="sb-standard">-</div><div class="sb-lbl">Standard</div></div>
+  <div class="sb-item"><div class="sb-val" id="sb-total" style="color:#e8f0ff">-</div><div class="sb-lbl">Total Complaints</div></div>
+  <div class="sb-item"><div class="sb-val red" id="sb-highrisk">-</div><div class="sb-lbl">High Risk Cases</div></div>
+  <div class="sb-item"><div class="sb-val blue" id="sb-visible">-</div><div class="sb-lbl">Visible Cities</div></div>
+</div>
+
+<script>
+const map = L.map('map',{center:[22.5,80.0],zoom:5});
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© CartoDB',maxZoom:18}).addTo(map);
+
+const fraudCityMap={upi:['Mumbai','Delhi','Kolkata'],otp:['Delhi','Mumbai','Bengaluru'],credit:['Mumbai','Bengaluru','Pune'],phishing:['Hyderabad','Chennai','Bengaluru']};
+const timeRiskMap={night:['critical'],day:['standard','high'],peak:['high','critical']};
+let activeFilters={risk:'all',fraud:'all',time:'all'};
+let allCities=[];
+let cityMarkers={};
+
+function getColor(s){return s>0.40?'#ff2d2d':s>0.15?'#ff7a00':'#00e676';}
+function getBadgeClass(s){return s>0.40?'badge-critical':s>0.15?'badge-high':'badge-standard';}
+function getBadgeLabel(s){return s>0.40?'CRITICAL':s>0.15?'HIGH':'STANDARD';}
+function getAlertClass(s){return s>0.40?'critical':s>0.15?'high':'standard';}
+function getAction(s,n){
+  if(s>0.40)return `Deploy task force. Alert banks & ATMs in ${n}. Freeze transactions.`;
+  if(s>0.15)return `Enhanced monitoring. Coordinate with cyber cell in ${n}.`;
+  return `Routine monitoring. No immediate action.`;
+}
+function highlightCard(name){
+  document.querySelectorAll('.city-card').forEach(c=>c.classList.remove('selected'));
+  const card=document.getElementById(`card-${name}`);
+  if(card){card.classList.add('selected');card.scrollIntoView({behavior:'smooth',block:'nearest'});}
+}
+
+function setFilter(type,value,btn){
+  activeFilters[type]=value;
+  btn.parentElement.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function cityPasses(city){
+  const rc=getAlertClass(city.score);
+  if(activeFilters.risk!=='all'&&rc!==activeFilters.risk)return false;
+  if(activeFilters.fraud!=='all'){
+    const hotspots=fraudCityMap[activeFilters.fraud]||[];
+    if(!hotspots.includes(city.city))return false;
+  }
+  if(activeFilters.time!=='all'){
+    const allowed=timeRiskMap[activeFilters.time]||[];
+    if(!allowed.includes(rc))return false;
+  }
+  return true;
+}
+
+function applyFilters(){
+  let visible=0;
+  const isFiltered=activeFilters.risk!=='all'||activeFilters.fraud!=='all'||activeFilters.time!=='all';
+  document.getElementById('filter-tag').className=`filter-tag ${isFiltered?'show':''}`;
+  allCities.forEach(city=>{
+    const passes=cityPasses(city);
+    const {circle,inner}=cityMarkers[city.city];
+    const card=document.getElementById(`card-${city.city}`);
+    if(passes){
+      circle.setStyle({opacity:0.9,fillOpacity:0.3});
+      inner.setStyle({opacity:1,fillOpacity:1});
+      if(card)card.classList.remove('hidden');
+      visible++;
+    } else {
+      circle.setStyle({opacity:0.08,fillOpacity:0.05});
+      inner.setStyle({opacity:0.1,fillOpacity:0.1});
+      if(card)card.classList.add('hidden');
+    }
+  });
+  document.getElementById('sb-visible').textContent=visible;
+  document.getElementById('city-count').textContent=isFiltered?`(${visible} shown)`:'';
+}
+
+async function loadMap(){
+  try{
+    const res=await fetch('/city-risk');
+    allCities=await res.json();
+    const critical=allCities.filter(c=>c.score>0.40).length;
+    const high=allCities.filter(c=>c.score>0.15&&c.score<=0.40).length;
+    const standard=allCities.filter(c=>c.score<=0.15).length;
+    const total=allCities.reduce((s,c)=>s+c.total,0);
+    const highRisk=allCities.reduce((s,c)=>s+c.high_risk,0);
+    document.getElementById('sb-critical').textContent=critical;
+    document.getElementById('sb-high').textContent=high;
+    document.getElementById('sb-standard').textContent=standard;
+    document.getElementById('sb-total').textContent=total.toLocaleString();
+    document.getElementById('sb-highrisk').textContent=highRisk.toLocaleString();
+    document.getElementById('sb-visible').textContent=allCities.length;
+
+    const cityList=document.getElementById('city-list');
+    const alertList=document.getElementById('alert-list');
+    cityList.innerHTML='';alertList.innerHTML='';
+
+    allCities.forEach(city=>{
+      const color=getColor(city.score);
+      const radius=Math.sqrt(city.total)*1.2;
+      const barWidth=(city.score/0.45*100).toFixed(1);
+      const valClass=city.score>0.40?'red':city.score>0.15?'orange':'green';
+
+      const circle=L.circleMarker([city.lat,city.lon],{radius,fillColor:color,color,weight:2,opacity:0.9,fillOpacity:0.3}).addTo(map);
+      const inner=L.circleMarker([city.lat,city.lon],{radius:5,fillColor:color,color:'#fff',weight:1,opacity:1,fillOpacity:1}).addTo(map);
+      cityMarkers[city.city]={circle,inner};
+
+      const popup=`
+        <div class="p-title">${city.city.toUpperCase()}</div>
+        <div class="p-row"><span class="p-key">RISK SCORE</span><span class="p-val ${valClass}">${city.score}</span></div>
+        <div class="p-row"><span class="p-key">TOTAL COMPLAINTS</span><span class="p-val">${city.total.toLocaleString()}</span></div>
+        <div class="p-row"><span class="p-key">HIGH RISK CASES</span><span class="p-val red">${city.high_risk.toLocaleString()}</span></div>
+        <div class="p-row"><span class="p-key">HIGH RISK %</span><span class="p-val">${((city.high_risk/city.total)*100).toFixed(1)}%</span></div>
+        <div class="p-row"><span class="p-key">STATUS</span><span class="p-val ${valClass}">${getBadgeLabel(city.score)}</span></div>
+        <div class="p-action">⚡ ${getAction(city.score,city.city)}</div>`;
+      circle.bindPopup(popup,{maxWidth:260});
+      inner.bindPopup(popup,{maxWidth:260});
+      inner.on('click',()=>highlightCard(city.city));
+      circle.on('click',()=>highlightCard(city.city));
+
+      const card=document.createElement('div');
+      card.className='city-card';card.id=`card-${city.city}`;
+      card.innerHTML=`
+        <div class="city-card-top"><span class="city-name">${city.city}</span><span class="badge ${getBadgeClass(city.score)}">${getBadgeLabel(city.score)}</span></div>
+        <div class="bar-bg"><div class="bar-fill" style="width:${barWidth}%;background:${color}"></div></div>
+        <div class="city-stats">
+          <div class="stat"><span class="stat-val">${city.score}</span><span class="stat-lbl">Score</span></div>
+          <div class="stat"><span class="stat-val">${city.high_risk}</span><span class="stat-lbl">High Risk</span></div>
+          <div class="stat"><span class="stat-val">${city.total}</span><span class="stat-lbl">Total</span></div>
+        </div>`;
+      card.addEventListener('click',()=>{map.setView([city.lat,city.lon],8,{animate:true});inner.openPopup();highlightCard(city.city);});
+      cityList.appendChild(card);
+
+      const cls=getAlertClass(city.score);
+      const typeLabel=cls==='critical'?'ZONE_RED_FLAG':cls==='high'?'HIGH_PRIORITY':'STANDARD_WATCH';
+      const alertItem=document.createElement('div');
+      alertItem.className=`alert-item ${cls}`;
+      alertItem.innerHTML=`<div class="alert-type">${typeLabel}</div><div class="alert-city">${city.city}</div><div class="alert-action">${getAction(city.score,city.city)}</div>`;
+      alertList.appendChild(alertItem);
+    });
+  }catch(e){console.error(e);}
+}
+
+loadMap();
+setInterval(loadMap,30000);
+</script>
+</body>
+</html>
